@@ -41,7 +41,9 @@ namespace C2M2.Utils
         {
             get
             {
-                if (GameManager.instance.vrDeviceManager.VRActive)
+
+                if (GameManager.instance.vrDeviceManager != null && GameManager.instance.vrDeviceManager.VRActive)
+
                 {
                     return OVRInput.Get(resetButton) && grabbable.isGrabbed;
                 }
@@ -56,9 +58,15 @@ namespace C2M2.Utils
         {
             get
             {
-                return !GameManager.instance.vrDeviceManager.VRActive
+              if(GameManager.instance.vrDeviceManager != null){
+                    return !GameManager.instance.vrDeviceManager.VRActive
                     && Input.GetMouseButtonDown(moveMouseButton)
                     && IsClickedObjectThisObject(out RaycastHit hitInfo);
+                }
+                else{
+                    return Input.GetMouseButtonDown(moveMouseButton)
+                    && IsClickedObjectThisObject(out RaycastHit hitInfo);
+                }
             }
         }
 

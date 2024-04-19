@@ -160,7 +160,7 @@ namespace C2M2.Simulation
         {
             get
             {
-                if (GameManager.instance.vrDeviceManager.VRActive)
+                if (GameManager.instance.vrDeviceManager != null && GameManager.instance.vrDeviceManager.VRActive)
                 {
                     // Uses the value of both joysticks added together
                     float scaler = OVRInput.Get(OVRInput.Axis2D.PrimaryThumbstick).y + OVRInput.Get(OVRInput.Axis2D.SecondaryThumbstick).y;
