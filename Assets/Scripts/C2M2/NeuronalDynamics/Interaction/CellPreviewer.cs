@@ -61,7 +61,7 @@ namespace C2M2.NeuronalDynamics.Interaction {
             {
                 cellsPath = "NeuronalDynamics" + Path.AltDirectorySeparatorChar + "Geometries";
             }
-            string fullPath = Application.streamingAssetsPath + Path.DirectorySeparatorChar + cellsPath;
+            string fullPath = Application.dataPath + "/Resources" + "/Geometries";
             string[] geoms = GetGeometryNames(fullPath);
 
             if (geoms.Length > 0)

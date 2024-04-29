@@ -51,7 +51,7 @@ namespace C2M2.NeuronalDynamics.Visualization
 
             char sl = Path.DirectorySeparatorChar;
             if (!vrnFileName.EndsWith(".vrn")) vrnFileName = vrnFileName + ".vrn";
-            vrnReader = new VrnReader(Application.streamingAssetsPath + sl + "NeuronalDynamics" + sl + "Geometries" + sl + vrnFileName);
+            vrnReader = new VrnReader(Application.dataPath + sl + "Resources" + sl + "Geometries" + sl + vrnFileName);
 
             refinements = vrnReader.ListRefinements();
 

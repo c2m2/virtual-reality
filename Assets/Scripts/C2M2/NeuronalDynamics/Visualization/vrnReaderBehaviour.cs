@@ -23,15 +23,17 @@ namespace C2M2.NeuronalDynamics.Visualization.VRN {
         /// </summary>
         /// The coarse 1d mesh is retrieved as well as the by a factor of 
         /// 2.5 inflated 2d mesh is retrieved from the archive test.vrn
-        public void Start () {
+        public void start () {
+
             try {
                 ////////////////////////////////////////////////////////////////
                 /// Example 1: List grids and/or retrieve mesh file name from 
                 ///            archive based on refinement or inflation
                 ////////////////////////////////////////////////////////////////
-                string fullFileName = Application.dataPath + Path.DirectorySeparatorChar + fileName;
+                string fullFileName = "C:/Users\bhugg/Documents/GitHub/Neuro-VISOR/Assets/Resources/Geometries";
+                Debug.Log(fullFileName);
                 /// Instantiate the VRN reader with the desired file name (.vrn archive) to load from Assets
-                VrnReader reader = new VrnReader (fullFileName);
+               VrnReader reader = new VrnReader (fullFileName);
                 /// List all 1D and 2D geometries contained in given .vrn archive
                 Debug.Log (reader.List ());
 
