@@ -4,6 +4,8 @@ using UnityEngine;
 
 [RequireComponent(typeof(GrabRescaler))]
 [RequireComponent(typeof(NDLineGraph))]
+[RequireComponent (typeof(AudioSource))]
+[RequireComponent(typeof(ONSPAudioSource))]
 public class NDGraph : NDInteractables
 {
     public NDGraphManager GraphManager { get { return simulation.graphManager; } }
@@ -11,14 +13,15 @@ public class NDGraph : NDInteractables
     private GrabRescaler grabRescaler;
     public NDLineGraph ndlinegraph;
 
-    // Start is called before the first frame update
+    
     void Awake()
     {
         grabRescaler = GetComponent<GrabRescaler>();
         ndlinegraph = GetComponent<NDLineGraph>();
+        var audio = this.gameObject.AddComponent<VertexAudio>();
     }
 
-    // Update is called once per frame
+    
     void Update()
     {
         if (simulation == null || GraphManager == null)
