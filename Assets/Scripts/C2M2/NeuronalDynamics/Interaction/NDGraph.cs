@@ -1,4 +1,5 @@
 ﻿using C2M2.Interaction;
+using C2M2.NeuronalDynamics.Interaction;
 using C2M2.NeuronalDynamics.Interaction.UI;
 using UnityEngine;
 
