@@ -1,4 +1,6 @@
 ﻿using C2M2.Interaction;
+using C2M2.Interaction.VR;
+using C2M2.NeuronalDynamics.Interaction;
 using C2M2.NeuronalDynamics.Interaction.UI;
 using UnityEngine;
 
@@ -11,11 +13,15 @@ public class NDGraph : NDInteractables
     private GrabRescaler grabRescaler;
     public NDLineGraph ndlinegraph;
 
-    // Start is called before the first frame update
+    //Jaden: Each Plot instance is equipped w/ an AudioSource Component.
+    public new AudioSource audio;
+
     void Awake()
     {
         grabRescaler = GetComponent<GrabRescaler>();
         ndlinegraph = GetComponent<NDLineGraph>();
+        var aud = this.gameObject.AddComponent<VertexAudio>();
+
     }
 
     // Update is called once per frame
@@ -40,7 +46,6 @@ public class NDGraph : NDInteractables
             Destroy(this);
         }
         name = "Graph(" + simulation.name + ")[vert" + FocusVert + "]";
-
         GraphManager.graphs.Add(this);
     }
 
