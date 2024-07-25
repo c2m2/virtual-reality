@@ -293,8 +293,12 @@ namespace C2M2.NeuronalDynamics.Simulation {
         /// </summary>
         /// <returns> One scalar value for each 3D vertex based on its 1D vert's scalar value </returns>
         public sealed override float[] GetValues () {
+            /* double[] valsPrev1D = GetPrev1DValues(); */
             double[] vals1D = Get1DValues();
             double[] scalars3D = new double[Mapping.Data.Count];
+            
+            /* Debug.Log("Prev: "+valsPrev1D.ToString()); */
+            /* Debug.Log("Curr: "+vals1D.ToString()); */
 
             if (vals1D == null) { return null; }
 
@@ -350,12 +354,14 @@ namespace C2M2.NeuronalDynamics.Simulation {
         /// </summary>
         /// <param name="newValues"> List of 1D vert indices and values to add onto that index. </param>
         public abstract void Set1DValues((int, double)[] newValues);
+        /* public abstract void SetPrev1DValues((int, double)[] newValues); */
 
         /// <summary>
         /// Requires derived classes to know how to make available one value for each 1D vertex
         /// </summary>
         /// <returns></returns>
         public abstract double[] Get1DValues ();
+        /* public abstract double[] GetPrev1DValues (); */
         protected override void OnAwakePre()
         {
             UpdateGrid1D();

@@ -52,6 +52,7 @@ namespace C2M2.Simulation
         /// Minimum time for each time step to run in seconds
         /// </summary>
         readonly float minTimeStep = .01f;
+        readonly float additionalTime = .1f; // Used for emulating an expensive operation
 
         /// <summary>
         /// How often the visualization should be updated in seconds. Should never be less than minTime
@@ -209,13 +210,14 @@ namespace C2M2.Simulation
                 
                 GameManager.instance.solveBarrier.SignalAndWait();
                 float timeChange = (float)(DateTime.Now - startStepTime).TotalSeconds;
-                resourceUsage = timeChange / minTimeStep;
+                resourceUsage = timeChange / (minTimeStep + additionalTime);
                 if (resourceUsage < 1)
                 {
-                    int millisecondsToWait = (int)(1000 * (minTimeStep-timeChange));
+                    int millisecondsToWait = (int)(1000 * ((minTimeStep + additionalTime)-timeChange));
                     await Task.Delay(millisecondsToWait);
                 }
                 if (cts.Token.IsCancellationRequested) break;
+                /* Debug.Log((DateTime.Now - startStepTime).ToString()); */
                 startStepTime = DateTime.Now;
             }
             GameManager.instance.solveBarrier.RemoveParticipant();

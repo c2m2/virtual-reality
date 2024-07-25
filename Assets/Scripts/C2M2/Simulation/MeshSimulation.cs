@@ -90,12 +90,29 @@ namespace C2M2.Simulation
         /// </summary>
         protected override void UpdateVisualization(in float[] newValues)
         {
-            Color32[] newCols = ColorLUT.Evaluate(newValues);
+            float[] rValues = GetRichardsonExtrapolation(newValues);
+
+            Color32[] newCols = ColorLUT.Evaluate(rValues);
             if(newCols != null)
             {
                 mf.mesh.colors32 = newCols;
             }
         }
+ 
+        /// <summary>
+        /// Uses Richardson Extrapolation to approximate visualization values
+        /// TODO: Add conditionals to make this only run when runtime is too slow
+        /// </summary>
+        protected float[] GetRichardsonExtrapolation(in float[] newValues)
+        {
+            for(int i=0;i<newValues.Length;i++){
+                line += newValues[i].ToString();
+                line += " ";
+            }
+            return newValues;
+        }
+               
+
 
         protected override void OnAwakePost(Mesh viz) //refactor
         {
