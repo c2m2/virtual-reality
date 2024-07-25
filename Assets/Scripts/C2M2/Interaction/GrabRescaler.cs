@@ -65,7 +65,7 @@ namespace C2M2.Interaction
         void Update()
         {
             // RaycastEventHandler handles calling rescale for Desktop mode, TODO this is bad and should be changed
-            if (!GameManager.instance.vrDeviceManager.VRActive) return;
+            if (GameManager.instance.vrDeviceManager == null || !GameManager.instance.vrDeviceManager.VRActive) return;
 
             if (grabbable.isGrabbed) Rescale();
         }

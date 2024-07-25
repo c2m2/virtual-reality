@@ -125,14 +125,14 @@ namespace C2M2.NeuronalDynamics.Interaction.UI
 
         private void ReadGradients()
         {
-            if(Application.platform == RuntimePlatform.OSXPlayer || Application.platform == RuntimePlatform.OSXEditor)
+            if(Application.platform == RuntimePlatform.OSXPlayer || Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.LinuxPlayer || Application.platform == RuntimePlatform.LinuxEditor)
             {
                 subPath = Path.AltDirectorySeparatorChar + "Gradients";
 
             }
             // Find gradient files in gradient directory
             DirectoryInfo d = new DirectoryInfo(basePath + subPath + Path.DirectorySeparatorChar);
-            if (Application.platform == RuntimePlatform.OSXPlayer || Application.platform == RuntimePlatform.OSXEditor)
+            if(Application.platform == RuntimePlatform.OSXPlayer || Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.LinuxPlayer || Application.platform == RuntimePlatform.LinuxEditor)
             {
                 d = new DirectoryInfo(basePath + subPath + Path.AltDirectorySeparatorChar);
             }
@@ -153,7 +153,7 @@ namespace C2M2.NeuronalDynamics.Interaction.UI
                 // Read requested gradietns
                 for(int i = 0; i < readNames.Length; i++)
                 {
-                    if (Application.platform == RuntimePlatform.OSXPlayer || Application.platform == RuntimePlatform.OSXEditor)
+                     if(Application.platform == RuntimePlatform.OSXPlayer || Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.LinuxPlayer || Application.platform == RuntimePlatform.LinuxEditor)
                     {
                         readGrads[i] = ReadGradient.Read(basePath + subPath + Path.AltDirectorySeparatorChar + readNames[i] + extension);
                     }

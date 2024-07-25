@@ -1,27 +1,33 @@
+/*
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ * All rights reserved.
+ *
+ * Licensed under the Oculus SDK License Agreement (the "License");
+ * you may not use the Oculus SDK except in compliance with the License,
+ * which is provided at the time of installation or download, or which
+ * otherwise accompanies this software in either electronic or hard copy form.
+ *
+ * You may obtain a copy of the License at
+ *
+ * https://developer.oculus.com/licenses/oculussdk/
+ *
+ * Unless required by applicable law or agreed to in writing, the Oculus SDK
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /************************************************************************************
-Filename    :   OculusSpatializerUnity.cs
-Content     :   Interface into real-time geometry reflection engine for native Unity
-Copyright   :   Copyright (c) Facebook Technologies, LLC and its affiliates. All rights reserved.
+ * Filename    :   OculusSpatializerUnity.cs
+ * Content     :   Interface into real-time geometry reflection engine for native Unity
+ ***********************************************************************************/
 
-Licensed under the Oculus SDK Version 3.5 (the "License"); 
-you may not use the Oculus SDK except in compliance with the License, 
-which is provided at the time of installation or download, or which 
-otherwise accompanies this software in either electronic or hard copy form.
-
-You may obtain a copy of the License at
-
-https://developer.oculus.com/licenses/sdk-3.5/
-
-Unless required by applicable law or agreed to in writing, the Oculus SDK 
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-************************************************************************************/
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Runtime.InteropServices;
+using AOT;
 
 public class OculusSpatializerUnity : MonoBehaviour
 {
@@ -35,9 +41,6 @@ public class OculusSpatializerUnity : MonoBehaviour
     public int rayCacheSize = 512;
 
     public bool dynamicReflectionsEnabled = true;
-
-    AudioRaycastCallback _raycastCallback; // cache an instance of the delegate so the GC doesn't nuke it!
-
     float particleSize = 0.2f;
     float particleOffset = 0.1f;
 
@@ -58,6 +61,7 @@ public class OculusSpatializerUnity : MonoBehaviour
 
     static LayerMask gLayerMask = -1;
     static Vector3 swapHandedness(Vector3 vec) { return new Vector3(vec.x, vec.y, -vec.z); }
+    [MonoPInvokeCallback(typeof(AudioRaycastCallback))]
     static void AudioRaycast(Vector3 origin, Vector3 direction, out Vector3 point, out Vector3 normal, System.IntPtr data)
     {
         point = Vector3.zero;
@@ -73,8 +77,7 @@ public class OculusSpatializerUnity : MonoBehaviour
 
     void Start()
     {
-        _raycastCallback = new AudioRaycastCallback(AudioRaycast);
-        OSP_Unity_AssignRaycastCallback(_raycastCallback, System.IntPtr.Zero);
+        OSP_Unity_AssignRaycastCallback(AudioRaycast, System.IntPtr.Zero);
     }
 
     void OnDestroy()
@@ -86,7 +89,7 @@ public class OculusSpatializerUnity : MonoBehaviour
     {
         if (dynamicReflectionsEnabled)
         {
-            OSP_Unity_AssignRaycastCallback(_raycastCallback, System.IntPtr.Zero);
+            OSP_Unity_AssignRaycastCallback(AudioRaycast, System.IntPtr.Zero);
         }
         else
         {
@@ -324,7 +327,7 @@ public class OculusSpatializerUnity : MonoBehaviour
 	private const string strOSP = "AudioPluginOculusSpatializer";
 
     [DllImport(strOSP)]
-    private static extern int OSP_Unity_AssignRaycastCallback(System.MulticastDelegate callback, System.IntPtr data);
+    private static extern int OSP_Unity_AssignRaycastCallback(AudioRaycastCallback callback, System.IntPtr data);
     [DllImport(strOSP)]
     private static extern int OSP_Unity_AssignRaycastCallback(System.IntPtr callback, System.IntPtr data);
 

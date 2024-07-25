@@ -77,7 +77,7 @@ MonoBehaviour:
   renderWalls: 1
   windowColor:
     serializedVersion: 2
-    rgba: 4278190080
+    rgba: 838860800
   ErrorWindow: {fileID: 4379399537388247450}
   cellColors:
   - serializedVersion: 2

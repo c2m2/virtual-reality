@@ -57,11 +57,16 @@ namespace C2M2.NeuronalDynamics.Interaction {
             FindSimulationLoader();
 
             // Get possible geometries from given direcrory
-            if(Application.platform==RuntimePlatform.OSXPlayer || Application.platform==RuntimePlatform.OSXEditor)
+            string fullPath = Application.streamingAssetsPath + Path.DirectorySeparatorChar + cellsPath;
+
+            // Correct path formatting for osx and linux
+            if(Application.platform==RuntimePlatform.OSXPlayer || Application.platform==RuntimePlatform.OSXEditor || 
+            Application.platform==RuntimePlatform.LinuxPlayer || Application.platform==RuntimePlatform.LinuxEditor
+            )
             {
                 cellsPath = "NeuronalDynamics" + Path.AltDirectorySeparatorChar + "Geometries";
+                fullPath = Application.streamingAssetsPath + Path.AltDirectorySeparatorChar + cellsPath;
             }
-            string fullPath = Application.streamingAssetsPath + Path.DirectorySeparatorChar + cellsPath;
             string[] geoms = GetGeometryNames(fullPath);
 
             if (geoms.Length > 0)
