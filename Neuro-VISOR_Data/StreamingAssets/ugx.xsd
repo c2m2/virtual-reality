@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="grid">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="vertices">
+          <xs:complexType>
+            <xs:simpleContent>
+              <xs:extension base="xs:string">
+                <xs:attribute name="coords" type="xs:unsignedByte" use="required" />
+              </xs:extension>
+            </xs:simpleContent>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="edges" type="xs:string" minOccurs="0" maxOccurs="1" />
+        <xs:element name="triangles" type="xs:string" minOccurs="0" maxOccurs="1" />
+        <xs:element name="tetrahedrons" type="xs:string" minOccurs="0" maxOccurs="1" />
+        <xs:element name="vertex_attachment" maxOccurs="3">
+          <xs:complexType>
+            <xs:simpleContent>
+              <xs:extension base="xs:string">
+                <xs:attribute name="name" type="xs:string" use="required" />
+                <xs:attribute name="type" type="xs:string" use="required" />
+                <xs:attribute name="passOn" type="xs:unsignedByte" />
+                <xs:attribute name="global" type="xs:unsignedByte" />
+              </xs:extension>
+            </xs:simpleContent>
+          </xs:complexType>
+        </xs:element>
+        <xs:element maxOccurs="unbounded" name="subset_handler">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element maxOccurs="unbounded" name="subset">
+                <xs:complexType>
+                  <xs:sequence minOccurs="0">
+                    <xs:element minOccurs="0" name="volumes" type="xs:string" />
+                    <xs:element minOccurs="0" name="vertices" type="xs:string" />
+                    <xs:element minOccurs="0" name="faces" type="xs:string" />
+                    <xs:element minOccurs="0" name="edges" type="xs:string"/>
+                  </xs:sequence>
+                  <xs:attribute name="name" type="xs:string" use="required" />
+                  <xs:attribute name="color" type="xs:string" use="required" />
+                  <xs:attribute name="state" type="xs:unsignedInt" use="required" />
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+            <xs:attribute name="name" type="xs:string" use="required" />
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="selector">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="vertices" type="xs:string" minOccurs="0" maxOccurs="1" />
+              <xs:element name="edges" type="xs:string" minOccurs="0" maxOccurs="1" />
+              <xs:element name="faces" type="xs:string" minOccurs="0" maxOccurs="1"  />
+              <xs:element name="volumes" type="xs:string" minOccurs="0" maxOccurs="1" />
+            </xs:sequence>
+            <xs:attribute name="name" type="xs:string" use="required" />
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="projection_handler" maxOccurs="1">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="default">
+                <xs:complexType>
+                  <xs:simpleContent>
+                    <xs:extension base="xs:string">
+                      <xs:attribute name="type" type="xs:string" use="required" />
+                    </xs:extension>
+                  </xs:simpleContent>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+            <xs:attribute name="name" type="xs:string" use="required" />
+            <xs:attribute name="subset_handler" type="xs:unsignedByte" use="required" />
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+      <xs:attribute name="name" type="xs:string" use="required" />
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
