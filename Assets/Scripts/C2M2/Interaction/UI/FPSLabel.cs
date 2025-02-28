@@ -34,5 +34,4 @@ namespace C2M2.Interaction.UI
             public LabelNotFoundException(string message, Exception inner) : base(message, inner) { }
         }
     }
-
 }
