@@ -30,6 +30,18 @@ namespace C2M2.NeuronalDynamics.Simulation
             CurrentState = Vector.Build.Dense(nodeCount, probability);
             PreviousState = CurrentState.Clone();
         }
+
+        public double GetSteadyState(double V)
+        {
+            Vector voltage = Vector.Build.Dense(1, V);
+            double a = Alpha(voltage)[0];
+            double b = Beta(voltage)[0];
+            if (a + b == 0)
+            {
+                return 0;
+            }
+            return a / (a + b);
+        }
     }
 
     public class IonChannel

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System;
+using SysMath = System.Math;
 using UnityEngine;
 using Vector = MathNet.Numerics.LinearAlgebra.Vector<double>;
 using CSparse.Storage;
@@ -52,7 +53,7 @@ namespace C2M2.NeuronalDynamics.Simulation
         /// This is the voltage for the voltage clamp, this is primarily used for when we do the convergence analysis of the code using a 
         /// soma clamp at 50 [mV], the units for voltage in the solver is [V] that is why <c>vstart</c> is set to 0.05
         ///</summary>
-        public double vstart = 0.050;         
+        public double vstart = 1.000;         
         ///<summary>
         /// [ohm.m] resistance.length, this is the axial resistence of the neuron, increasing this value has the effect of making the AP waves more localized and slower conduction speed
         /// decreasing this value has the effect of make the AP waves larger and have a faster conduction speed
@@ -73,7 +74,7 @@ namespace C2M2.NeuronalDynamics.Simulation
         /// \f[\bar{g}_{Na}m^3h(V-V_{Na})\f]
         /// where \f$m,h\f$ are the state variables, and \f$V_{Na}\f$ is the reversal potential for sodium.
         /// </summary>
-        private double gna = 50.0 * 1.0E1;
+        private double gna = 60.0 * 1.0E1;
         /// <summary>
         /// [S/m2] leak conductance per unit area, this is the leak conductance per unit area, it is used in this term
         /// \f[\bar{g}_{l}(V-V_l)\f]
@@ -106,12 +107,16 @@ namespace C2M2.NeuronalDynamics.Simulation
         private double hi = 0.9959410;        
         // Calcium Conductance and Reversal Potential
         private double gca = 1.0 * 1.0E1;
-        private double eca = 270.0 * 1.0E-3;
+        private double eca = 120.0 * 1.0E-3;
         private double qx = 2;
         private double rx = 1;
+        // Chloride Constants
+        private double gcl = 10.0 * 1.0E1;
+        private double ecl = -80.0 * 1.0E-3;
+        private double clx = 1;
         // These initial probability states need to be verified
-        private double qi = 0.2;
-        private double ri = 0.8;
+        private double qi = 0.0;
+        private double ri = 0.0;
         /// </summary>
         /// [n] potassium channel state exponent, unitless
         /// </summary>
@@ -168,6 +173,8 @@ namespace C2M2.NeuronalDynamics.Simulation
         /// Temporary state vector
         /// </summary>
         private Vector tempState;
+        const double R_universal = 8.31431;   // J/(mol*K)
+        const double F_universal = 96485;   // C/mol
 
         List<double> reactConst;                            //This is for passing the reaction function constants
         List<CoordinateStorage<double>> sparse_stencils;
@@ -417,6 +424,7 @@ namespace C2M2.NeuronalDynamics.Simulation
             
             tempState = Vector.Build.Dense(Neuron.nodes.Count, 0);
             ///<c>reactConst</c> this is a small list for collecting the conductances and reversal potential which is sent to the reaction solve routine
+            // Commented out, delete whenever.
             reactConst = new List<double> { gk, gna, gl, ek, ena, el };
 
             /// this sets the target time step size
@@ -434,6 +442,13 @@ namespace C2M2.NeuronalDynamics.Simulation
             b = new double[Neuron.nodes.Count];
             ///<c>var lu = SparseLU.Create(l_csc, ColumnOrdering.MinimumDegreeAtA, 0.1);</c> this creates the LU decomposition of the HINES matrix which is defined by <c>l_csc</c>
             lu = SparseLU.Create(l_csc, ColumnOrdering.MinimumDegreeAtA, 0.1);
+            
+            // double initialVmin = -0.1;  // -100 mV (in volts)
+            // double initialVmax = 0.05;  // 50 mV (in volts)
+            // double restingPotential = FindSteadyState(activeIonChannels, initialVmin, initialVmax, cap, 1e-9);
+            // Debug.Log("Resting potential via bisection: " + (restingPotential * 1000) + " mV");
+            
+            // PrintEquilibriumAndRestingPotentials();
         }
 
         /// <summary>
@@ -489,6 +504,12 @@ namespace C2M2.NeuronalDynamics.Simulation
             Upre = U_Active.Clone();
             U_Active.SetSubVector(0, Neuron.nodes.Count, Vector.Build.DenseOfArray(b));
                        
+            // Equilibrium check: compare U_Active with Upre (from the previous iteration)
+            double tolerance = 1e-6; // in volts
+            if ((U_Active - Upre).L2Norm() < tolerance)
+            {
+                Debug.Log("Equilibrium reached: V ~ " + (U_Active[0] * 1000) + " mV");
+            }
         }
 
         internal override void SetOutputValues()
@@ -651,6 +672,23 @@ namespace C2M2.NeuronalDynamics.Simulation
                 return (1.0E3) * (0.0065) / (((-15.0 - Vin) / 28.0).PointwiseExp() + 1.0);
             };
 
+            // For Chloride Channel
+            Func<Vector, Vector> alpha_cl = voltage =>
+            {
+                var Vin = voltage.Clone();
+                Vin.Multiply(1.0E3, Vin);
+                // α₍Cl₎(V) = 0.07*(V+20) / (1 - exp(-(V+20)/10))
+                return (1.0E3) * (0.07) * (Vin.Add(20.0)).PointwiseDivide(((Vin.Add(20.0)).Divide(10.0)).PointwiseExp().Subtract(1.0));
+            };
+
+
+            Func<Vector, Vector> beta_cl = voltage =>
+            {
+                var Vin = voltage.Clone();
+                Vin.Multiply(1.0E3, Vin);
+                // β₍Cl₎(V) = 0.1 * exp(-(V+30)/10)
+                return (1.0E3) * (0.1) * ((-(Vin.Add(30.0)).Divide(10.0)).PointwiseExp());
+            };
 
             // Initialize ion channels and gating variables
             IonChannel potassiumChannel = new IonChannel("Potassium Channel", gk, ek);
@@ -664,14 +702,19 @@ namespace C2M2.NeuronalDynamics.Simulation
             IonChannel calciumChannel = new IonChannel("Calcium Channel", gca, eca);
             calciumChannel.AddGatingVariable(new GatingVariable("q", alpha_q, beta_q, qx, qi, Neuron.nodes.Count));
             calciumChannel.AddGatingVariable(new GatingVariable("r", alpha_r, beta_r, rx, ri, Neuron.nodes.Count));
+            
+            IonChannel chlorideChannel = new IonChannel("Chloride Channel", gcl, ecl);
+            chlorideChannel.AddGatingVariable(new GatingVariable("x", alpha_cl, beta_cl, 1, 0.5, Neuron.nodes.Count));
+
 
             IonChannel leakageChannel = new IonChannel("Leakage Channel", gl, el);
 
 
             AddIonChannel(potassiumChannel);
             AddIonChannel(sodiumChannel);
+            // AddIonChannel(chlorideChannel);
             AddIonChannel(calciumChannel);
-            AddIonChannel(leakageChannel);
+            // AddIonChannel(leakageChannel);
         }
 
         /// <summary>
@@ -1060,5 +1103,152 @@ namespace C2M2.NeuronalDynamics.Simulation
 
             Isyn = Vector.Build.Dense(Neuron.nodes.Count, 0.0); // will have to save/load
         }
+
+    //     public static double CalculateNernstPotential(double inside, double outside, double z, double temperatureCelsius = 36)
+    //     {
+    //         // inside = 140 mM; outside = 5 mM for potassium
+    //         double T = temperatureCelsius + 273.15; // Set to 36 C (As represented in pospischil)
+    //         double VT = (R_universal * T) / F_universal;  // Thermal voltage in volts (~0.026 V at room temperature)
+    //         // See Table 2.3 in Intro to Theoretical Neurobiology - Tuckwell (Page 49)
+    //         return (VT / z) * SysMath.Log(outside / inside);
+    //     }
+
+
+    //     public static double CalculateGoldmanPotential(List<IonChannel> activeChannels, double temperatureCelsius = 37)
+    //     {
+    //         string[] ionTypes = { "Potassium", "Sodium", "Chloride" };
+            
+    //         // Create a dictionary to accumulate conductances for each ion.
+    //         Dictionary<string, double> ionConductances = new Dictionary<string, double>();
+    //         foreach (var ion in ionTypes)
+    //         {
+    //             ionConductances[ion] = 0.0;
+    //         }
+            
+    //         // Loop over the active channels and add each channel's conductance to the appropriate ion type.
+    //         foreach (var channel in activeChannels)
+    //         {
+    //             foreach (var ion in ionTypes)
+    //             {
+    //                 if (channel.Name.Contains(ion))
+    //                 {
+    //                     ionConductances[ion] += channel.Conductance;
+    //                 }
+    //             }
+    //         }
+
+    //         // Define typical intracellular and extracellular concentrations (in mM) for each ion.
+    //         // Note: For chloride (an anion), the Goldman equation uses the intracellular concentration in the numerator.
+    //         Dictionary<string, (double inside, double outside)> concentrations = new Dictionary<string, (double, double)>();
+    //         concentrations["Potassium"] = (inside: 150.0, outside: 5.5);
+    //         concentrations["Sodium"]   = (inside: 15.0,  outside: 150.0);
+    //         concentrations["Chloride"] = (inside: 9.0,   outside: 125.0);
+
+    //         double T = temperatureCelsius + 273.15; // Convert Celsius to Kelvin
+    //         double VT = (R_universal * T) / F_universal;  // Thermal voltage in volts (~0.026 V at room temperature)
+
+    //         // Sum up contributions in numerator and denominator for the Goldman-Hodgkin-Katz equation.
+    //         double numerator = 0.0, denominator = 0.0;
+    //         foreach (var ion in ionTypes)
+    //         {
+    //             double P = ionConductances[ion];
+    //             var conc = concentrations[ion];
+    //             if (ion == "Chloride")
+    //             {
+    //                 // For anions, the roles of inside and outside are reversed.
+    //                 numerator += P * conc.inside;
+    //                 denominator += P * conc.outside;
+    //             }
+    //             else
+    //             {
+    //                 numerator += P * conc.outside;
+    //                 denominator += P * conc.inside;
+    //             }
+    //         }
+            
+    //         double Vm = VT * System.Math.Log(numerator / denominator);
+    //         return Vm; // in volts
+    //     }
+    //     private void PrintEquilibriumAndRestingPotentials()
+    //     {
+    //         // Example: Calculate potassium Nernst potential.
+    //         double K_inside = 15.0;
+    //         double K_outside = 150.0;
+    //         double EK = CalculateNernstPotential(K_inside, K_outside, +1, 37);
+    //         Debug.Log("Sodium Nernst potential: " + (EK * 1000) + " mV");
+
+    //         Debug.Log("");
+    //     }
+
+    //     public static double TotalCurrent(List<IonChannel> activeChannels, double V, double cap)
+    //     {
+    //         double total = 0.0;
+    //         foreach (var channel in activeChannels)
+    //         {
+    //             if (!channel.IsActive)
+    //                 continue;
+
+    //             if (channel.Name.Contains("Leak"))
+    //             {
+    //                 // For a leak channel, current = g * (V - E)
+    //                 total += channel.Conductance * (V - channel.ReversalPotential);
+    //             }
+    //             else
+    //             {
+    //                 double prod = 1.0;
+    //                 foreach (var gating in channel.GatingVariables)
+    //                 {
+    //                     // Here we assume the GatingVariable class has a method GetSteadyState(double V)
+    //                     double mInf = gating.GetSteadyState(V);
+    //                     prod *= System.Math.Pow(mInf, gating.Exponent);
+    //                 }
+    //             total += channel.Conductance * prod * (V - channel.ReversalPotential);
+    //             }
+    //         } return total;
+    //     }
+    // // In your reaction function you scaled by -1/cap, but for root-finding, 
+    // // you just need the zero crossing of the net current.
+ 
+
+    //     /// <summary>
+    //     /// Uses a simple bisection method to find the voltage V (in Volts) such that TotalCurrent(V)=0.
+    //     /// vMin and vMax define the initial bracket; tolerance is the desired accuracy.
+    //     /// </summary>
+    //     public static double FindSteadyState(List<IonChannel> activeChannels, double vMin, double vMax, double cap, double tolerance = 1e-9)
+    //     {
+    //         double fMin = TotalCurrent(activeChannels, V: vMin, cap: cap);
+    //         double fMax = TotalCurrent(activeChannels, V: vMax, cap: cap);
+
+    //         if (fMin * fMax > 0)
+    //         {
+    //             throw new Exception("No sign change in the initial bracket. Adjust vMin and vMax.");
+    //         }
+
+    //         double mid = 0.0;
+    //         while ((vMax - vMin) > tolerance)
+    //         {
+    //             mid = (vMin + vMax) / 2.0;
+    //             double fMid = TotalCurrent(activeChannels, mid, cap);
+    //             if (System.Math.Abs(fMid) < tolerance)
+    //             {
+    //                 return mid;
+    //             }
+    //             if (fMin * fMid < 0)
+    //             {
+    //                 vMax = mid;
+    //                 fMax = fMid;
+    //             }
+    //             else
+    //             {
+    //                 vMin = mid;
+    //                 fMin = fMid;
+    //             }
+    //         }
+    //         return mid;
+    //     }
+
+
     }
+
+
 }
